@@ -60,9 +60,10 @@ function fixture() {
 test("metadata worker stores provider metadata and queues the next stage", async () => {
   const { capture, job } = fixture();
   const repository = new WorkerRepository(capture, job);
+  const enqueued: ProcessingJob[] = [];
   const metadata: SourceMetadata = { title: "A useful video", description: "Metadata only" };
   const extractor: MetadataExtractor = { extract: async () => metadata };
-  const worker = new MetadataWorker(repository, extractor);
+  const worker = new MetadataWorker(repository, extractor, { enqueue: async (nextJob) => { enqueued.push(nextJob); } });
 
   const result = await worker.runOnce(new Date("2026-01-01T01:00:00.000Z"));
 
@@ -72,6 +73,8 @@ test("metadata worker stores provider metadata and queues the next stage", async
   assert.equal(repository.capture.status, "extracting_media");
   assert.equal(repository.job.status, "queued");
   assert.equal(repository.job.stage, "extracting_media");
+  assert.equal(enqueued[0]?.id, job.id);
+  assert.equal(enqueued[0]?.stage, "extracting_media");
 });
 
 test("metadata worker records failures without losing the source", async () => {

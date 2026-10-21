@@ -37,3 +37,4 @@ Saved Video Intelligence is an iOS-first Knowledge Library with a compatible web
 - Provisioned image repository: Artifact Registry Docker repository `svi`.
 - Dedicated service accounts exist for the API runtime, worker runtime, and Cloud Tasks dispatcher.
 - Queue dispatch remains disabled until Cloud Run stage services are deployed and IAM invocation grants are configured.
+- Worker transitions persist the next queued job before attempting Cloud Tasks dispatch; local mode retains the no-op queue and polling behavior.

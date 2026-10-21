@@ -5,6 +5,7 @@ import { JsonFileRepository, type KnowledgeRepository } from "../../../apps/api/
 import { PublicMetadataExtractor } from "../../../packages/ingestion/src/index.js";
 import { PipelineWorker } from "../../../workers/pipeline-worker/src/index.js";
 import { MetadataWorker } from "../../../workers/metadata-worker/src/index.js";
+import { createProcessingQueueFromEnvironment } from "../../../packages/processing/src/queue.js";
 import {
   createGitHubRepositorySearcherFromEnvironment,
   GitHubRepositoryDiscoveryStageHandler,
@@ -21,6 +22,7 @@ const port = Number(process.env.WORKER_PORT ?? process.env.PORT ?? "8080");
 const configuredStage = (process.env.WORKER_STAGE ?? "transcribing") as CaptureStage;
 const workerAuthToken = process.env.WORKER_AUTH_TOKEN;
 const dataFile = process.env.DATA_FILE ?? "./data/local-store.json";
+const processingQueue = createProcessingQueueFromEnvironment();
 
 function createRepository(): KnowledgeRepository {
   return process.env.FIRESTORE_ENABLED === "true"
@@ -33,13 +35,13 @@ function createRunOnce(repository: KnowledgeRepository): () => Promise<unknown> 
     const worker = new MetadataWorker(repository, new PublicMetadataExtractor({
       timeoutMs: Number(process.env.METADATA_FETCH_TIMEOUT_MS ?? "10000"),
       maxBytes: Number(process.env.METADATA_MAX_BYTES ?? "262144"),
-    }));
+    }), processingQueue);
     return () => worker.runOnce();
   }
 
   if (configuredStage === "transcribing") {
     const handler = new TranscriptionStageHandler(repository, createUnconfiguredTranscriptProviders());
-    const worker = new PipelineWorker(repository, configuredStage, handler);
+    const worker = new PipelineWorker(repository, configuredStage, handler, processingQueue);
     return () => worker.runOnce();
   }
 
@@ -48,7 +50,7 @@ function createRunOnce(repository: KnowledgeRepository): () => Promise<unknown> 
       repository,
       createGitHubRepositorySearcherFromEnvironment(),
     );
-    const worker = new PipelineWorker(repository, configuredStage, handler);
+    const worker = new PipelineWorker(repository, configuredStage, handler, processingQueue);
     return () => worker.runOnce();
   }
 
@@ -59,7 +61,7 @@ function createRunOnce(repository: KnowledgeRepository): () => Promise<unknown> 
         reason: `${configuredStage} provider is not configured yet.`,
       }),
     };
-    const worker = new PipelineWorker(repository, configuredStage as (typeof processingStages)[number], handler);
+    const worker = new PipelineWorker(repository, configuredStage as (typeof processingStages)[number], handler, processingQueue);
     return () => worker.runOnce();
   }
 

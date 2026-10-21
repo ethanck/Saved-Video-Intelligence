@@ -58,9 +58,10 @@ function fixture() {
 test("pipeline worker queues the next stage without fabricating output", async () => {
   const { capture, job } = fixture();
   const repository = new WorkerRepository(capture, job);
+  const enqueued: ProcessingJob[] = [];
   const worker = new PipelineWorker(repository, "extracting_media", {
     process: async () => ({ kind: "advance" as const }),
-  });
+  }, { enqueue: async (nextJob) => { enqueued.push(nextJob); } });
 
   const result = await worker.runOnce(new Date("2026-01-01T01:00:00.000Z"));
 
@@ -68,6 +69,8 @@ test("pipeline worker queues the next stage without fabricating output", async (
   assert.equal(repository.capture.status, "transcribing");
   assert.equal(repository.job.status, "queued");
   assert.equal(repository.job.stage, "transcribing");
+  assert.equal(enqueued[0]?.id, job.id);
+  assert.equal(enqueued[0]?.stage, "transcribing");
 });
 
 test("pipeline worker preserves the source and routes review results", async () => {

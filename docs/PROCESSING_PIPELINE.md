@@ -45,6 +45,14 @@ injected backend provider, preserves the original source URL, and either queues
 the next stage, routes to `needs_review`, or records a failure. It cannot mark a
 capture `ready` except when the final embedding stage explicitly succeeds.
 
+When a worker advances a capture, it persists the next queued job and then
+hands that job to the configured `ProcessingQueue`. Local development uses a
+no-op queue because polling workers claim queued jobs directly. Production
+Cloud Run services use Cloud Tasks so the next stage receives its own task. If
+managed dispatch is temporarily unavailable, the durable queued job is kept in
+Firestore and logged for reconciliation rather than being falsely marked as a
+processing failure.
+
 `workers/worker-runtime/src/server.ts` is the deployable HTTP entry point. It
 supports the initial metadata stage and every processing-stage name, with one
 Cloud Run service per configured `WORKER_STAGE`. The transcription and GitHub
@@ -127,8 +135,9 @@ production deployment should use Firestore plus managed queue/worker services.
 - Provider implementations for permitted metadata/media access, transcription,
   OCR, summarization, classification, and embeddings.
 - User confirmation flow for accepting or rejecting repository candidates.
-- Cloud Tasks queue creation, service-account permissions, and reconciliation
-  for jobs that remain queued after a dispatch outage.
+- Cloud Run deployment, stage-specific worker URLs, and enabling managed queue
+  dispatch in the production API/worker environments.
+- Reconciliation for jobs that remain queued after a dispatch outage.
 - Stage-specific Cloud Run worker URLs in the API queue configuration.
 - Idempotency keys, lease expiry, exponential backoff, dead-letter handling,
   rate limits, and per-provider quotas.

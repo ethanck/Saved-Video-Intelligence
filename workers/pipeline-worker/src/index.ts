@@ -7,6 +7,7 @@ import {
   type ProcessingStage,
   type ProcessingStageHandler,
 } from "../../../packages/processing/src/index.js";
+import { NoopProcessingQueue, type ProcessingQueue } from "../../../packages/processing/src/queue.js";
 
 export type PipelineWorkerResult =
   | { processed: false }
@@ -23,6 +24,7 @@ export class PipelineWorker {
     private readonly repository: PipelineRepository,
     private readonly stage: ProcessingStage,
     private readonly handler: ProcessingStageHandler,
+    private readonly queue: ProcessingQueue = new NoopProcessingQueue(),
   ) {}
 
   async runOnce(now = new Date()): Promise<PipelineWorkerResult> {
@@ -104,7 +106,17 @@ export class PipelineWorker {
     };
     await this.repository.updateCapture(nextCapture);
     await this.repository.updateJob(nextJob);
+    await enqueueWithoutBlocking(this.queue, nextJob);
     return { processed: true, captureId: capture.id, nextStage: targetStage };
+  }
+}
+
+/** Keep a durable queued job available when managed dispatch is unavailable. */
+async function enqueueWithoutBlocking(queue: ProcessingQueue, job: ProcessingJob): Promise<void> {
+  try {
+    await queue.enqueue(job);
+  } catch (error) {
+    console.error(`Could not dispatch processing job ${job.id}; it remains queued for reconciliation.`, error);
   }
 }
 

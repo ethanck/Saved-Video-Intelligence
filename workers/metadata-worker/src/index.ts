@@ -1,6 +1,7 @@
 /** Worker orchestration for the first metadata stage of capture processing. */
 import type { MetadataExtractor } from "@svi/ingestion";
 import type { CaptureRecord, CaptureStage, ProcessingJob } from "@svi/shared-types";
+import { NoopProcessingQueue, type ProcessingQueue } from "../../../packages/processing/src/queue.js";
 
 /** Minimal repository contract so workers do not depend on the HTTP application. */
 export interface ProcessingRepository {
@@ -23,6 +24,7 @@ export class MetadataWorker {
   constructor(
     private readonly repository: ProcessingRepository,
     private readonly extractor: MetadataExtractor,
+    private readonly queue: ProcessingQueue = new NoopProcessingQueue(),
   ) {}
 
   async runOnce(now = new Date()): Promise<MetadataWorkerResult> {
@@ -61,6 +63,7 @@ export class MetadataWorker {
       };
       await this.repository.updateCapture(updatedCapture);
       await this.repository.updateJob(nextJob);
+      await enqueueWithoutBlocking(this.queue, nextJob);
       return { processed: true, captureId: capture.id, nextStage: "extracting_media" };
     } catch (error) {
       const message = error instanceof Error ? error.message : "Metadata extraction failed.";
@@ -75,5 +78,14 @@ export class MetadataWorker {
       await this.repository.updateJob({ ...job, status: "failed", stage: "failed", errorMessage: message, updatedAt: failedAt });
       return { processed: true, captureId: capture.id, nextStage: "failed", errorMessage: message };
     }
+  }
+}
+
+/** Keep a durable queued job available when managed dispatch is unavailable. */
+async function enqueueWithoutBlocking(queue: ProcessingQueue, job: ProcessingJob): Promise<void> {
+  try {
+    await queue.enqueue(job);
+  } catch (error) {
+    console.error(`Could not dispatch processing job ${job.id}; it remains queued for reconciliation.`, error);
   }
 }
