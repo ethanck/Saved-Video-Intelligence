@@ -56,7 +56,7 @@ Implemented:
 - GitHub repository discovery stage with explicit-link extraction, bounded contextual search, ranked candidates, provenance evidence, and review status.
 - Tests for API capture behavior, client transport/error handling, worker transitions, and per-user isolation.
 
-Not yet implemented: mobile sign-in/session UI, the Xcode target wiring, real media/transcription provider implementations, production Cloud Run deployment and managed queue activation, final downstream classification/recipes/MCP, user confirmation for repository candidates, and skill review/export.
+Not yet implemented: mobile sign-in/session UI, the Xcode target wiring, real media/transcription provider implementations, managed queue activation, final downstream classification/recipes/MCP, user confirmation for repository candidates, and skill review/export. The API and initial private Cloud Run worker boundaries are deployed, but the transcription worker still safely routes to review until providers are configured.
 
 Validated baseline: `npm test` passes all 10 tests, `npm run build` completes, the API responds on port 8787, and `npm run web` serves the Expo web bundle on port 8081.
 

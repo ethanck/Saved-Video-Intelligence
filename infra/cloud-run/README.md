@@ -14,20 +14,28 @@ The following shared resources are provisioned:
 - Worker runtime service account: `svi-worker-runtime@saved-video-intelligence.iam.gserviceaccount.com`
 - Cloud Tasks dispatcher service account: `svi-task-dispatcher@saved-video-intelligence.iam.gserviceaccount.com`
 
-The API and worker services are not deployed yet. Keep `CLOUD_TASKS_ENABLED=false`
-until the stage-specific worker URLs exist and Cloud Run Invoker permissions are
-granted to the dispatcher identity.
+Deployed services:
+
+- API: `https://svi-api-dwstx3p4nq-ue.a.run.app`
+- Metadata worker (`received`): `https://svi-metadata-worker-dwstx3p4nq-ue.a.run.app`
+- Media boundary worker (`extracting_media`): `https://svi-media-worker-dwstx3p4nq-ue.a.run.app`
+- Transcription worker (`transcribing`): `https://svi-transcription-worker-dwstx3p4nq-ue.a.run.app`
+- Repository discovery worker (`discovering_repositories`): `https://svi-repository-discovery-worker-dwstx3p4nq-ue.a.run.app`
+
+The API is publicly reachable at the network layer and requires Firebase ID
+tokens for data routes. Workers are private and accept Cloud Run IAM callers.
+Cloud Run Invoker permissions are already granted to the Cloud Tasks dispatcher,
+but `CLOUD_TASKS_ENABLED=false` remains set until real media/transcription
+providers and the complete stage dispatch configuration are ready.
 
 ## Build images
 
 From the repository root:
 
 ```sh
-gcloud builds submit --tag REGION-docker.pkg.dev/PROJECT_ID/svi/api \
-  --file infra/Dockerfile.api .
+gcloud builds submit --config infra/cloudbuild.api.yaml .
 
-gcloud builds submit --tag REGION-docker.pkg.dev/PROJECT_ID/svi/worker \
-  --file infra/Dockerfile.worker .
+gcloud builds submit --config infra/cloudbuild.worker.yaml .
 ```
 
 Replace `REGION` and `PROJECT_ID` with the deployment project values. Do not

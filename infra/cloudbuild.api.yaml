@@ -1,0 +1,10 @@
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - --file=infra/Dockerfile.api
+      - --tag=us-east1-docker.pkg.dev/$PROJECT_ID/svi/api
+      - .
+images:
+  - us-east1-docker.pkg.dev/$PROJECT_ID/svi/api
+timeout: 1800s
