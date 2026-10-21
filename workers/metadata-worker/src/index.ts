@@ -45,26 +45,28 @@ export class MetadataWorker {
       const metadata = capture.originalUrl
         ? await this.extractor.extract({ url: capture.originalUrl, platform: capture.platform })
         : {};
-      const { errorMessage: _errorMessage, completedAt: _completedAt, ...captureWithoutTerminalState } = capture;
+      const { errorMessage: _errorMessage, completedAt: _completedAt, reviewReason: _reviewReason, ...captureWithoutTerminalState } = capture;
+      const nextStage: CaptureStage = metadata.captionsUrl ? "transcribing" : "needs_review";
       const updatedCapture: CaptureRecord = {
         ...captureWithoutTerminalState,
         ...(Object.keys(metadata).length > 0 ? { metadata } : {}),
         ...(capture.title || !metadata.title ? {} : { title: metadata.title }),
-        status: "extracting_media",
-        currentStage: "extracting_media",
+        status: nextStage,
+        currentStage: nextStage,
         updatedAt: now.toISOString(),
+        ...(nextStage === "needs_review" ? { reviewReason: "No public caption track was found. Add a manual transcript to continue." } : {}),
       };
       const { errorMessage: _jobError, ...jobWithoutError } = job;
       const nextJob: ProcessingJob = {
         ...jobWithoutError,
-        status: "queued",
-        stage: "extracting_media",
+        status: nextStage === "needs_review" ? "completed" : "queued",
+        stage: nextStage,
         updatedAt: now.toISOString(),
       };
       await this.repository.updateCapture(updatedCapture);
       await this.repository.updateJob(nextJob);
-      await enqueueWithoutBlocking(this.queue, nextJob);
-      return { processed: true, captureId: capture.id, nextStage: "extracting_media" };
+      if (nextJob.status === "queued") await enqueueWithoutBlocking(this.queue, nextJob);
+      return { processed: true, captureId: capture.id, nextStage };
     } catch (error) {
       const message = error instanceof Error ? error.message : "Metadata extraction failed.";
       const failedAt = now.toISOString();

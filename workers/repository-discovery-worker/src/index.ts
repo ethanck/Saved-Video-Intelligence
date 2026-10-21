@@ -28,7 +28,14 @@ export class GitHubRepositoryDiscoveryStageHandler {
     const transcript = await this.repository.getTranscript(context.capture.userId, context.capture.id);
     const discovery = await this.engine.discover({ capture: context.capture, ...(transcript ? { transcript } : {}) });
     await this.repository.saveGitHubRepositoryDiscovery(discovery);
-    return { kind: "advance" };
+    return {
+      kind: "needs_review",
+      reason: discovery.status === "found"
+        ? "GitHub repository candidates are ready for your review."
+        : discovery.status === "not_found"
+          ? "No GitHub repository was identified. Review the capture or continue manually."
+          : "GitHub repository discovery needs your review.",
+    };
   }
 }
 

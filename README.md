@@ -52,6 +52,7 @@ Implemented:
 - Provider-neutral stage contracts and a generic pipeline worker for media extraction through embeddings, with safe review and failure transitions.
 - Safe public HTML metadata extraction for the first worker stage, including title, description, author, thumbnail, and canonical URL where available.
 - Safe public caption-track discovery and bounded WebVTT parsing, with manual transcript fallback.
+- MVP routing that skips unimplemented media stages when captions are available and ends repository discovery in explicit review.
 - Deployable API/worker Dockerfiles and Cloud Run configuration guidance.
 - Transcript records stored separately from captures, with auditable fallback attempts and a manual transcript endpoint.
 - GitHub repository discovery stage with explicit-link extraction, bounded contextual search, ranked candidates, provenance evidence, and review status.

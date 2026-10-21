@@ -61,20 +61,37 @@ test("metadata worker stores provider metadata and queues the next stage", async
   const { capture, job } = fixture();
   const repository = new WorkerRepository(capture, job);
   const enqueued: ProcessingJob[] = [];
-  const metadata: SourceMetadata = { title: "A useful video", description: "Metadata only" };
+  const metadata: SourceMetadata = { title: "A useful video", description: "Metadata only", captionsUrl: "https://example.com/captions.vtt" };
   const extractor: MetadataExtractor = { extract: async () => metadata };
   const worker = new MetadataWorker(repository, extractor, { enqueue: async (nextJob) => { enqueued.push(nextJob); } });
 
   const result = await worker.runOnce(new Date("2026-01-01T01:00:00.000Z"));
 
-  assert.deepEqual(result, { processed: true, captureId: capture.id, nextStage: "extracting_media" });
+  assert.deepEqual(result, { processed: true, captureId: capture.id, nextStage: "transcribing" });
   assert.equal(repository.capture.title, "A useful video");
   assert.deepEqual(repository.capture.metadata, metadata);
-  assert.equal(repository.capture.status, "extracting_media");
+  assert.equal(repository.capture.status, "transcribing");
   assert.equal(repository.job.status, "queued");
-  assert.equal(repository.job.stage, "extracting_media");
+  assert.equal(repository.job.stage, "transcribing");
   assert.equal(enqueued[0]?.id, job.id);
-  assert.equal(enqueued[0]?.stage, "extracting_media");
+  assert.equal(enqueued[0]?.stage, "transcribing");
+});
+
+test("metadata worker routes sources without public captions to manual review", async () => {
+  const { capture, job } = fixture();
+  const repository = new WorkerRepository(capture, job);
+  const extractor: MetadataExtractor = { extract: async () => ({ title: "No captions" }) };
+  const enqueued: ProcessingJob[] = [];
+  const worker = new MetadataWorker(repository, extractor, { enqueue: async (nextJob) => { enqueued.push(nextJob); } });
+
+  const result = await worker.runOnce(new Date("2026-01-01T01:00:00.000Z"));
+
+  assert.deepEqual(result, { processed: true, captureId: capture.id, nextStage: "needs_review" });
+  assert.equal(repository.capture.status, "needs_review");
+  assert.equal(repository.capture.reviewReason, "No public caption track was found. Add a manual transcript to continue.");
+  assert.equal(repository.job.status, "completed");
+  assert.equal(repository.job.stage, "needs_review");
+  assert.deepEqual(enqueued, []);
 });
 
 test("metadata worker records failures without losing the source", async () => {

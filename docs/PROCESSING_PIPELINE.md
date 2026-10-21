@@ -61,7 +61,7 @@ stages safely route to review instead of fabricating output. `/health` is public
 for service health checks; `/tasks/process` is protected and intended for Cloud
 Tasks or Pub/Sub delivery.
 
-Stage order:
+Full stage order when future providers are enabled:
 
 ```text
 received
@@ -76,6 +76,18 @@ received
 → embedding
 → ready
 ```
+
+The MVP intentionally uses a shorter active path:
+
+```text
+received → transcribing (only when a public caption track exists)
+         → discovering_repositories → needs_review
+```
+
+Sources without public captions go directly from metadata to `needs_review` so
+the user can paste a manual transcript. The media, frame, OCR, summary,
+classification, and embedding stages remain available extension points but do
+not block the MVP.
 
 ## Transcript fallback order
 
@@ -141,7 +153,7 @@ production deployment should use Firestore plus managed queue/worker services.
   OCR, summarization, classification, and embeddings.
 - User confirmation flow for accepting or rejecting repository candidates.
 - Cloud Run deployment, stage-specific worker URLs, and enabling managed queue
-  dispatch in the production API/worker environments.
+  dispatch in the production API/worker environments for the MVP stages.
 - Reconciliation for jobs that remain queued after a dispatch outage.
 - Stage-specific Cloud Run worker URLs in the API queue configuration.
 - Idempotency keys, lease expiry, exponential backoff, dead-letter handling,
