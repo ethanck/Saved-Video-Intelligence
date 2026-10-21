@@ -71,7 +71,7 @@ export class PublicMetadataExtractor implements MetadataExtractor {
       const html = await readLimitedText(response, this.maxBytes);
       return {
         ...metadata,
-        ...parseHtmlMetadata(html),
+        ...parseHtmlMetadata(html, response.url || url),
       };
     } catch (error) {
       if (error instanceof DOMException && error.name === "AbortError") {
@@ -164,7 +164,7 @@ async function readLimitedText(response: Response, maxBytes: number): Promise<st
   return new TextDecoder().decode(bytes);
 }
 
-function parseHtmlMetadata(html: string): SourceMetadata {
+function parseHtmlMetadata(html: string, baseUrl: string): SourceMetadata {
   const meta = new Map<string, string>();
   for (const match of html.matchAll(/<meta\b[^>]*>/gi)) {
     const attributes = parseAttributes(match[0]);
@@ -177,6 +177,12 @@ function parseHtmlMetadata(html: string): SourceMetadata {
   const canonicalMatch = [...html.matchAll(/<link\b[^>]*>/gi)]
     .map((match) => parseAttributes(match[0]))
     .find((attributes) => attributes.rel?.toLowerCase().split(/\s+/).includes("canonical"));
+  const captionsTrack = [...html.matchAll(/<track\b[^>]*>/gi)]
+    .map((match) => parseAttributes(match[0]))
+    .find((attributes) => {
+      const kind = attributes.kind?.toLowerCase();
+      return (kind === "captions" || kind === "subtitles") && Boolean(attributes.src);
+    });
 
   return compactMetadata({
     title: meta.get("og:title") ?? (titleMatch ? decodeHtml(titleMatch[1]!) : undefined),
@@ -185,7 +191,17 @@ function parseHtmlMetadata(html: string): SourceMetadata {
     thumbnailUrl: meta.get("og:image"),
     publishedAt: meta.get("article:published_time"),
     canonicalUrl: canonicalMatch?.href,
+    captionsUrl: resolveUrl(captionsTrack?.src, baseUrl),
   });
+}
+
+function resolveUrl(value: string | undefined, baseUrl: string): string | undefined {
+  if (!value) return undefined;
+  try {
+    return new URL(value, baseUrl).toString();
+  } catch {
+    return undefined;
+  }
 }
 
 function parseAttributes(tag: string): Record<string, string> {

@@ -3,7 +3,7 @@ import test from "node:test";
 import type { CaptureRecord, CaptureStage, ProcessingJob, TranscriptRecord } from "@svi/shared-types";
 import type { TranscriptProvider } from "../packages/processing/src/index.js";
 import { TranscriptFallbackChain } from "../packages/processing/src/index.js";
-import { TranscriptionStageHandler } from "../workers/transcription-worker/src/index.js";
+import { PublicCaptionsTranscriptProvider, TranscriptionStageHandler } from "../workers/transcription-worker/src/index.js";
 
 function capture(): CaptureRecord {
   return {
@@ -62,6 +62,37 @@ test("transcript fallback uses the next method after a provider failure", async 
   assert.equal(result.transcript.attempts.length, 2);
   assert.equal(result.transcript.attempts[0]?.status, "failed");
   assert.equal(result.transcript.attempts[1]?.status, "succeeded");
+});
+
+test("public captions provider reads bounded WebVTT tracks without downloading media", async () => {
+  let requestedUrl = "";
+  const provider = new PublicCaptionsTranscriptProvider({
+    fetchImpl: async (input, init) => {
+      requestedUrl = String(input);
+      assert.equal(init?.method, "GET");
+      assert.equal(init?.redirect, "manual");
+      return new Response(`WEBVTT
+
+00:00.000 --> 00:01.500
+Hello <b>world</b>.
+
+00:01.500 --> 00:03.000
+A second cue.`);
+    },
+  });
+
+  const result = await provider.transcribe({
+    capture: { ...capture(), metadata: { captionsUrl: "https://cdn.example.test/captions.vtt" } },
+  });
+
+  assert.equal(requestedUrl, "https://cdn.example.test/captions.vtt");
+  assert.equal(result.source, "captions");
+  assert.equal(result.provider, "public-webvtt");
+  assert.equal(result.text, "Hello world. A second cue.");
+  assert.deepEqual(result.segments, [
+    { startMs: 0, endMs: 1500, text: "Hello world." },
+    { startMs: 1500, endMs: 3000, text: "A second cue." },
+  ]);
 });
 
 test("transcription handler persists a successful fallback transcript", async () => {

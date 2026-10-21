@@ -51,12 +51,13 @@ Implemented:
 - API-client support for async Firebase ID-token injection, while retaining the local development header path.
 - Provider-neutral stage contracts and a generic pipeline worker for media extraction through embeddings, with safe review and failure transitions.
 - Safe public HTML metadata extraction for the first worker stage, including title, description, author, thumbnail, and canonical URL where available.
+- Safe public caption-track discovery and bounded WebVTT parsing, with manual transcript fallback.
 - Deployable API/worker Dockerfiles and Cloud Run configuration guidance.
 - Transcript records stored separately from captures, with auditable fallback attempts and a manual transcript endpoint.
 - GitHub repository discovery stage with explicit-link extraction, bounded contextual search, ranked candidates, provenance evidence, and review status.
 - Tests for API capture behavior, client transport/error handling, worker transitions, and per-user isolation.
 
-Not yet implemented: mobile sign-in/session UI, the Xcode target wiring, real media/transcription provider implementations, managed queue activation, final downstream classification/recipes/MCP, user confirmation for repository candidates, and skill review/export. The API and initial private Cloud Run worker boundaries are deployed, but the transcription worker still safely routes to review until providers are configured.
+Not yet implemented: mobile sign-in/session UI, the Xcode target wiring, Google Cloud Speech-to-Text or other audio transcription, managed queue activation, final downstream classification/recipes/MCP, user confirmation for repository candidates, and skill review/export. The API and initial private Cloud Run worker boundaries are deployed; public caption tracks now work when a source page exposes one, with manual transcript fallback otherwise.
 
 Validated baseline: `npm test` passes all 10 tests, `npm run build` completes, the API responds on port 8787, and `npm run web` serves the Expo web bundle on port 8081.
 

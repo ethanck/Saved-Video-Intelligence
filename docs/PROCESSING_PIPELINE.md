@@ -82,11 +82,14 @@ received
 The transcription worker uses `TranscriptFallbackChain`. The intended provider
 order is:
 
-1. Public captions or platform-provided transcript data, when permitted and
-   actually available.
-2. A primary speech-to-text provider using permitted temporary media/audio.
-3. An alternate speech-to-text provider using the same permitted input.
-4. Manual transcript entry and review if every automated method fails.
+1. A bounded public WebVTT/text caption track discovered from the source page,
+   when permitted and actually available.
+2. Manual transcript entry and review when public captions are unavailable.
+
+Google Cloud Speech-to-Text is intentionally not part of the MVP deployment.
+It can be added later as another `TranscriptProvider` without changing the API,
+stored transcript schema, or manual fallback: the new provider would consume a
+permitted temporary audio artifact and be inserted after public captions.
 
 Every attempt is persisted with its method, provider, timestamps, success or
 failure, and error message. The system never treats a social caption as a
@@ -119,9 +122,11 @@ The authenticated endpoint
 was actually produced for that capture, and the selection is stored with a
 review timestamp.
 
-Provider implementations remain behind interfaces. A missing, denied, or
-low-confidence provider result must fail safely or route to review; it must not
-fabricate a transcript, summary, classification, or recipe.
+Provider implementations remain behind interfaces. The MVP public-caption
+adapter only reads bounded public caption tracks and never downloads video.
+A missing, denied, or low-confidence provider result must fail safely or route
+to review; it must not fabricate a transcript, summary, classification, or
+recipe.
 
 ## Local development
 

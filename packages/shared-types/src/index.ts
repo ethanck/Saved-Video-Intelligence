@@ -44,6 +44,8 @@ export type SourceMetadata = {
   author?: string;
   thumbnailUrl?: string;
   publishedAt?: string;
+  /** Public caption/WebVTT track discovered from the source page, if available. */
+  captionsUrl?: string;
 };
 
 /** One timestamped section of a persisted transcript. */

@@ -104,6 +104,7 @@ test("public metadata extractor reads lightweight HTML metadata without download
           <meta name="author" content="Example creator">
           <meta property="og:image" content="https://cdn.example.test/thumb.jpg">
           <link rel="canonical" href="https://example.com/canonical">
+          <video><track kind="captions" src="/captions.vtt"></video>
         </head></html>
       `, { headers: { "content-type": "text/html; charset=utf-8" } });
     },
@@ -116,6 +117,7 @@ test("public metadata extractor reads lightweight HTML metadata without download
   assert.equal(metadata.author, "Example creator");
   assert.equal(metadata.thumbnailUrl, "https://cdn.example.test/thumb.jpg");
   assert.equal(metadata.canonicalUrl, "https://example.com/canonical");
+  assert.equal(metadata.captionsUrl, "https://example.com/captions.vtt");
   assert.equal(requestedInit?.method, "GET");
   assert.equal(requestedInit?.redirect, "manual");
   assert.match(String(new Headers(requestedInit?.headers).get("accept")), /text\/html/);

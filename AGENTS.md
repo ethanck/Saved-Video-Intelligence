@@ -8,6 +8,7 @@ Saved Video Intelligence is an iOS-first Knowledge Library with a compatible web
 - Store source links and derived knowledge, never video files. Discard any permitted temporary media after processing.
 - Run extraction, transcription, OCR, summarization, classification, and indexing in backend workers. Preserve provenance, failures, retries, and durable status.
 - GitHub repository discovery is a backend stage after transcription; store ranked candidates with source evidence and require review for uncertain matches.
+- MVP transcription reads bounded public caption tracks when available, then routes to manual transcript entry; future speech-to-text providers must implement the existing backend provider interface.
 - Use Firebase/Firestore as the authenticated durable control plane; run heavy processing in managed backend workers such as Cloud Run, dispatched by a managed queue. The device must never receive worker code, provider credentials, or provider-selection pointers.
 - Keep credentials and provider integrations on the backend. Do not bypass private accounts, DRM, login barriers, or other access controls.
 - MCP is authenticated, scoped, read/search-only for v1, and audited. Skills require safety review and explicit approval; never auto-install or execute them.

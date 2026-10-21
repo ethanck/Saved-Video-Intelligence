@@ -11,7 +11,7 @@ import {
   GitHubRepositoryDiscoveryStageHandler,
 } from "../../../workers/repository-discovery-worker/src/index.js";
 import {
-  createUnconfiguredTranscriptProviders,
+  createMvpTranscriptProviders,
   TranscriptionStageHandler,
 } from "../../../workers/transcription-worker/src/index.js";
 import { processingStages, type ProcessingStageHandler } from "../../../packages/processing/src/index.js";
@@ -40,7 +40,10 @@ function createRunOnce(repository: KnowledgeRepository): () => Promise<unknown> 
   }
 
   if (configuredStage === "transcribing") {
-    const handler = new TranscriptionStageHandler(repository, createUnconfiguredTranscriptProviders());
+    const handler = new TranscriptionStageHandler(repository, createMvpTranscriptProviders({
+      maxBytes: Number(process.env.CAPTIONS_MAX_BYTES ?? "524288"),
+      timeoutMs: Number(process.env.CAPTIONS_FETCH_TIMEOUT_MS ?? "10000"),
+    }));
     const worker = new PipelineWorker(repository, configuredStage, handler, processingQueue);
     return () => worker.runOnce();
   }
