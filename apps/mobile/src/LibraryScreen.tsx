@@ -15,16 +15,17 @@ import {
 } from "react-native";
 import type { CaptureRecord } from "@svi/shared-types";
 import { ApiClientError } from "@svi/api-client";
-import { createMobileApiClient } from "./api";
+import { useMobileApiClient } from "./api";
+import { useAuth } from "./auth";
 import { saveSource } from "./libraryActions";
-
-const api = createMobileApiClient();
 
 /**
  * The first universal screen intentionally focuses on capture and Inbox review.
  * It contains no Note Chat or "Discuss" action; that belongs to the separate app.
  */
 export function LibraryScreen() {
+  const api = useMobileApiClient();
+  const { user, signOut } = useAuth();
   const [captures, setCaptures] = useState<CaptureRecord[]>([]);
   const [query, setQuery] = useState("");
   const [draftUrl, setDraftUrl] = useState("");
@@ -44,7 +45,7 @@ export function LibraryScreen() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [query]);
+  }, [api, query]);
 
   useEffect(() => {
     void loadCaptures();
@@ -71,7 +72,7 @@ export function LibraryScreen() {
     } finally {
       setSaving(false);
     }
-  }, [draftUrl]);
+  }, [api, draftUrl]);
 
   const handleRetry = useCallback(async (captureId: string) => {
     try {
@@ -85,7 +86,7 @@ export function LibraryScreen() {
     } finally {
       setRetryingId(undefined);
     }
-  }, []);
+  }, [api]);
 
   const visibleCaptures = useMemo(() => {
     const normalized = query.trim().toLowerCase();
@@ -101,12 +102,16 @@ export function LibraryScreen() {
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
         <View style={styles.header}>
-          <View>
+          <View style={styles.headerCopy}>
             <Text style={styles.eyebrow}>KNOWLEDGE LIBRARY</Text>
             <Text style={styles.title}>Saved videos</Text>
+            {user?.email ? <Text style={styles.account}>{user.email}</Text> : null}
           </View>
-          <View style={styles.inboxBadge}>
-            <Text style={styles.inboxBadgeText}>{captures.length}</Text>
+          <View style={styles.headerActions}>
+            <View style={styles.inboxBadge}>
+              <Text style={styles.inboxBadgeText}>{captures.length}</Text>
+            </View>
+            {user ? <Pressable onPress={() => void signOut()} style={styles.signOutButton}><Text style={styles.signOutText}>Sign out</Text></Pressable> : null}
           </View>
         </View>
 
@@ -198,11 +203,16 @@ const styles = StyleSheet.create({
   safeArea: { backgroundColor: "#081018", flex: 1 },
   container: { alignSelf: "center", flex: 1, maxWidth: 760, paddingHorizontal: 20, width: "100%" },
   header: { alignItems: "center", flexDirection: "row", justifyContent: "space-between", paddingTop: 24 },
+  headerCopy: { flex: 1 },
+  headerActions: { alignItems: "flex-end", gap: 8 },
   eyebrow: { color: "#8ee5c1", fontSize: 11, fontWeight: "700", letterSpacing: 2 },
   title: { color: "#f4f7fb", fontSize: 32, fontWeight: "700", marginTop: 6 },
   subtitle: { color: "#aab2c1", fontSize: 15, lineHeight: 22, marginTop: 8 },
+  account: { color: "#7d8494", fontSize: 12, marginTop: 6 },
   inboxBadge: { alignItems: "center", backgroundColor: "#16332e", borderRadius: 22, height: 44, justifyContent: "center", width: 44 },
   inboxBadgeText: { color: "#8ee5c1", fontSize: 16, fontWeight: "700" },
+  signOutButton: { paddingVertical: 2 },
+  signOutText: { color: "#8ee5c1", fontSize: 12, fontWeight: "600" },
   captureBox: { alignItems: "center", backgroundColor: "#111c27", borderColor: "#243447", borderRadius: 16, borderWidth: 1, flexDirection: "row", marginTop: 24, padding: 8 },
   input: { color: "#f4f7fb", flex: 1, fontSize: 15, minHeight: 44, paddingHorizontal: 12 },
   saveButton: { alignItems: "center", backgroundColor: "#8ee5c1", borderRadius: 11, justifyContent: "center", minHeight: 44, paddingHorizontal: 18 },

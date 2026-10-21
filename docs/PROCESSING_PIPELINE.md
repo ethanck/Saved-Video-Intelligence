@@ -153,9 +153,10 @@ production deployment should use Firestore plus managed queue/worker services.
   OCR, summarization, classification, and embeddings.
 - User confirmation flow for accepting or rejecting repository candidates.
 - Cloud Run deployment, stage-specific worker URLs, and enabling managed queue
-  dispatch in the production API/worker environments for the MVP stages.
+  dispatch for future media/OCR/knowledge stages. The MVP stages are deployed
+  and dispatch through Cloud Tasks.
 - Reconciliation for jobs that remain queued after a dispatch outage.
-- Stage-specific Cloud Run worker URLs in the API queue configuration.
+- Stage-specific Cloud Run worker URLs for future media/OCR/knowledge stages.
 - Idempotency keys, lease expiry, exponential backoff, dead-letter handling,
   rate limits, and per-provider quotas.
 - A knowledge-item data model for transcripts, summaries, recipes, tags, and

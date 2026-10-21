@@ -58,7 +58,7 @@ Implemented:
 - GitHub repository discovery stage with explicit-link extraction, bounded contextual search, ranked candidates, provenance evidence, and review status.
 - Tests for API capture behavior, client transport/error handling, worker transitions, and per-user isolation.
 
-Not yet implemented: mobile sign-in/session UI, the Xcode target wiring, Google Cloud Speech-to-Text or other audio transcription, managed queue activation, final downstream classification/recipes/MCP, user confirmation for repository candidates, and skill review/export. The API and initial private Cloud Run worker boundaries are deployed; public caption tracks now work when a source page exposes one, with manual transcript fallback otherwise.
+Not yet implemented: mobile sign-in/session UI, the Xcode target wiring, Google Cloud Speech-to-Text or other audio transcription, activation of future media/OCR/knowledge stages, final downstream classification/recipes/MCP, user confirmation for repository candidates, and skill review/export. The MVP API, Cloud Tasks path, and private workers are deployed; public caption tracks work when a source page exposes one, with manual transcript fallback otherwise.
 
 Validated baseline: `npm test` passes all 10 tests, `npm run build` completes, the API responds on port 8787, and `npm run web` serves the Expo web bundle on port 8081.
 

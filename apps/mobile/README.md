@@ -22,7 +22,11 @@ The current workspace uses Expo SDK 57, React Native 0.86.3, and React 19.2.3. I
 
 Set `EXPO_PUBLIC_API_URL` to a deployed HTTPS API or a LAN-reachable development address when testing on a physical phone. `127.0.0.1` is appropriate for the web browser and usually the iOS simulator, but not for a physical device.
 
-The current screens implement the capture/Inbox loop, capture detail history, retry handling, repository review, and manual transcript fallback. A manual transcript is submitted through the API and resumes the pipeline at repository discovery. The client uses `@svi/api-client`, preserves source links, and deliberately contains no Note Chat discussion action. Both screens construct the client through `src/api.ts`; the factory currently defaults to the local development identity and accepts a Firebase ID-token provider when sign-in is added.
+The current screens implement the capture/Inbox loop, capture detail history, retry handling, repository review, and manual transcript fallback. A manual transcript is submitted through the API and resumes the pipeline at repository discovery. The client uses `@svi/api-client`, preserves source links, and deliberately contains no Note Chat discussion action. Both screens construct the client through `src/api.ts`; configured builds use a persisted Firebase Auth session and inject its short-lived ID token into API requests. Local builds without Firebase client configuration retain the development-only `x-user-id` fallback.
+
+## Authenticated local or deployed builds
+
+Copy the root `.env.example` values into an ignored `apps/mobile/.env` file and add the Firebase client configuration from the Firebase console. Set `EXPO_PUBLIC_API_URL` to the deployed API URL for a production test. The app supports email/password sign-in and account creation; the API verifies the resulting Firebase ID token. Do not add service-account JSON, GitHub tokens, speech credentials, or other provider secrets to this app or its environment.
 
 The API and metadata worker are separate processes during local development. Start both before testing capture processing:
 

@@ -24,9 +24,9 @@ Deployed services:
 
 The API is publicly reachable at the network layer and requires Firebase ID
 tokens for data routes. Workers are private and accept Cloud Run IAM callers.
-Cloud Run Invoker permissions are already granted to the Cloud Tasks dispatcher,
-but `CLOUD_TASKS_ENABLED=false` remains set until real media/transcription
-providers and the complete stage dispatch configuration are ready.
+Cloud Run Invoker permissions are granted to the Cloud Tasks dispatcher.
+Managed dispatch is active for the MVP stages (`received`, `transcribing`, and
+`discovering_repositories`); future media/OCR/knowledge stages remain inactive.
 
 ## Build images
 

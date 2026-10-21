@@ -20,6 +20,7 @@ Saved Video Intelligence is an iOS-first Knowledge Library with a compatible web
 - Active project: `saved-video-intelligence`; Firestore region: `us-east1`.
 - Rules and indexes are owner-scoped. Google and email/password Authentication are enabled.
 - Local JSON storage is the offline default. Use `FIRESTORE_ENABLED=true` only with server-side Firebase Admin credentials or ADC.
+- The Expo client uses a persisted Firebase Auth session when public Firebase client configuration is supplied; only local API development may use the `x-user-id` fallback.
 - Never put service-account material or provider keys in the client or source control.
 
 ## Runtime and workflow
@@ -38,5 +39,5 @@ Saved Video Intelligence is an iOS-first Knowledge Library with a compatible web
 - Provisioned queue: Cloud Tasks `svi-processing`.
 - Provisioned image repository: Artifact Registry Docker repository `svi`.
 - Dedicated service accounts exist for the API runtime, worker runtime, and Cloud Tasks dispatcher.
-- Cloud Run API and initial private worker services are deployed, with dispatcher invocation grants configured; queue dispatch remains disabled until real media/transcription providers and complete stage configuration are ready.
+- Cloud Run API and initial private worker services are deployed, with dispatcher invocation grants configured; queue dispatch is active for the MVP stages and remains disabled for future media/OCR/knowledge stages.
 - Worker transitions persist the next queued job before attempting Cloud Tasks dispatch; local mode retains the no-op queue and polling behavior.

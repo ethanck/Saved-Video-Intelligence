@@ -15,12 +15,11 @@ import {
 import type { CaptureDetailResponse } from "@svi/api-client";
 import { ApiClientError } from "@svi/api-client";
 import type { CaptureStage, ProcessingJob } from "@svi/shared-types";
-import { createMobileApiClient } from "./api";
-
-const api = createMobileApiClient();
+import { useMobileApiClient } from "./api";
 
 /** Detail view shared by native iOS and the React Native Web build. */
 export function CaptureDetailScreen({ captureId }: { captureId: string | undefined }) {
+  const api = useMobileApiClient();
   const [detail, setDetail] = useState<CaptureDetailResponse | undefined>();
   const [message, setMessage] = useState<string | undefined>();
   const [loading, setLoading] = useState(true);
@@ -46,7 +45,7 @@ export function CaptureDetailScreen({ captureId }: { captureId: string | undefin
       setLoading(false);
       setRefreshing(false);
     }
-  }, [captureId]);
+  }, [api, captureId]);
 
   const handleRepositoryDecision = useCallback(async (decision: "accept" | "reject", fullName?: string) => {
     if (!captureId) return;
@@ -61,7 +60,7 @@ export function CaptureDetailScreen({ captureId }: { captureId: string | undefin
     } finally {
       setSelectingRepository(undefined);
     }
-  }, [captureId]);
+  }, [api, captureId]);
 
   useEffect(() => {
     void loadDetail();
@@ -80,7 +79,7 @@ export function CaptureDetailScreen({ captureId }: { captureId: string | undefin
     } finally {
       setRetrying(false);
     }
-  }, [captureId]);
+  }, [api, captureId]);
 
   const handleManualTranscript = useCallback(async () => {
     if (!captureId || !manualTranscript.trim()) return;
@@ -101,7 +100,7 @@ export function CaptureDetailScreen({ captureId }: { captureId: string | undefin
     } finally {
       setSubmittingTranscript(false);
     }
-  }, [captureId, manualTranscript]);
+  }, [api, captureId, manualTranscript]);
 
   if (loading) {
     return <CenteredState><ActivityIndicator color="#8ee5c1" /></CenteredState>;
