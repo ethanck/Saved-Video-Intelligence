@@ -1,0 +1,13 @@
+{
+  "name": "@svi/metadata-worker",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "dependencies": {
+    "@svi/ingestion": "0.1.0",
+    "@svi/shared-types": "0.1.0"
+  }
+}
+

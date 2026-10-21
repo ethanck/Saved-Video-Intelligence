@@ -1,0 +1,20 @@
+{
+  "expo": {
+    "name": "Saved Video Intelligence",
+    "slug": "saved-video-intelligence",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "savedvideo",
+    "userInterfaceStyle": "automatic",
+    "plugins": ["expo-router"],
+    "ios": {
+      "bundleIdentifier": "com.savedvideointelligence.app",
+      "supportsTablet": false
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static"
+    }
+  }
+}
+

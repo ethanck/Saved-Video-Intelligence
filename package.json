@@ -1,0 +1,41 @@
+{
+  "name": "saved-video-intelligence",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Personal Knowledge Library for shared video links and media.",
+  "type": "module",
+  "engines": {
+    "node": ">=24 <25",
+    "npm": ">=11"
+  },
+  "workspaces": [
+    "apps/mobile",
+    "packages/*",
+    "workers/*"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsx apps/api/src/server.ts",
+    "dev:metadata-worker": "tsx apps/api/src/metadata-worker-runner.ts",
+    "dev:worker": "tsx workers/worker-runtime/src/server.ts",
+    "dev:mobile": "cd apps/mobile && expo start",
+    "web": "cd apps/mobile && expo start --web",
+    "start": "node dist/apps/api/src/server.js",
+    "start:worker": "node dist/workers/worker-runtime/src/server.js",
+    "test": "tsx --test tests/**/*.test.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@google-cloud/tasks": "^7.3.0",
+    "firebase-admin": "^14.5.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@types/react": "~19.2.4",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "react-native": "0.86.3",
+    "tsx": "^4.19.2",
+    "typescript": "~6.0.3"
+  }
+}

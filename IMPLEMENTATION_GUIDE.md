@@ -13,7 +13,7 @@ This is a separate product from Note Chat. They may share backend services and c
 
 1. The user taps the iOS Share button in TikTok, Instagram, Safari, or another app.
 2. They select Saved Video Intelligence.
-3. The Share Extension accepts a URL, text containing a URL, or an uploaded file.
+3. The Share Extension accepts a URL or text containing a URL.
 4. The extension sends the payload to the backend and closes quickly.
 5. The backend creates a queued capture record immediately.
 6. Background workers fetch metadata, transcribe permitted media, extract visual/OCR information, summarize, classify, and index the item.
@@ -24,8 +24,10 @@ TikTok and Instagram may provide only a URL and caption rather than the original
 
 ## Product surfaces
 
-### iOS app
+### Universal client (`apps/mobile`)
 
+- Build the main client with Expo/React Native and Expo Router.
+- Run the same component system on iOS and web through React Native Web.
 - Library browsing
 - Search and filters
 - Collection management
@@ -35,15 +37,19 @@ TikTok and Instagram may provide only a URL and caption rather than the original
 - Processing status and retry controls
 - Privacy, export, and MCP settings
 
+The web build is a compatible authenticated application surface. It does not replace the native iOS Share Extension, which is required for reliable system share-sheet capture.
+
 ### iOS Share Extension
 
-- Accept public URLs and shared text
-- Accept video/image files when available
-- Send capture payload to the backend
-- Show a short success state
-- Close without performing heavy processing
+- Implement as a native Swift Share Extension target alongside the Expo app.
+- Accept public URLs and shared text only. The product stores links and derived knowledge, not video/image files.
+- Send a small authenticated capture payload to the backend.
+- Show a short success state and close without performing heavy processing.
+- Keep the extension free of provider credentials and media extraction logic.
 
-Add the Share Extension as a native iOS target. Configure activation rules for public URLs, text, videos, and images. A phone cannot reach a development server at `127.0.0.1`; use a deployed HTTPS endpoint or a secure development tunnel.
+The initial source boundary is documented in `apps/mobile/ios/SavedVideoShareExtension`. The Xcode target, entitlements, activation rules, native handoff, and mobile auth/session UI are still implementation work; the shared API client already supports Firebase ID-token injection.
+
+Add the Share Extension as a native iOS target. Configure activation rules for public URLs and shared text. A phone cannot reach a development server at `127.0.0.1`; use a deployed HTTPS endpoint or a secure development tunnel.
 
 ### Knowledge Library
 
@@ -83,6 +89,7 @@ received
 → fetching_metadata
 → extracting_media
 → transcribing
+→ discovering_repositories
 → extracting_frames
 → ocr
 → summarizing
@@ -312,13 +319,14 @@ POST   /mcp
 saved-video-intelligence/
 ├── apps/
 │   ├── api/
-│   ├── web/
-│   └── ios/
-│       ├── SavedVideoApp/
-│       └── SavedVideoShareExtension/
+│   └── mobile/
+│       ├── app/                         # Expo Router routes for iOS and web
+│       ├── src/                         # shared React Native client UI
+│       └── ios/SavedVideoShareExtension/ # Swift source boundary
 ├── packages/
-│   ├── shared-types/
+│   ├── api-client/
 │   ├── ingestion/
+│   ├── shared-types/
 │   ├── classifier/
 │   ├── mcp-server/
 │   └── skill-exporter/
@@ -336,15 +344,16 @@ saved-video-intelligence/
 
 Recommended production stack:
 
-- Native SwiftUI iOS app and Share Extension
+- Expo/React Native with Expo Router and React Native Web for the shared client
+- Native Swift iOS Share Extension target
 - TypeScript backend
-- PostgreSQL with pgvector
-- Redis-backed job queue
-- S3-compatible media storage
+- Firestore for authenticated per-user capture and job records
+- A replaceable backend queue/worker runtime for asynchronous processing
+- No permanent media storage; permitted temporary media is discarded after processing
 - MCP Streamable HTTP endpoint
 - Provider interfaces for transcription, vision, summaries, and classification
 
-SQLite and local filesystem storage are acceptable for local development if the storage interfaces are kept replaceable.
+The current implementation uses a local JSON repository by default and includes a Firestore adapter. Storage and queue interfaces must remain replaceable as the product moves toward production workers.
 
 ## Security and privacy
 
@@ -363,14 +372,34 @@ Implement:
 
 ## Milestones
 
+### Current implementation status
+
+The repository now contains the first backend and universal-client vertical slice for Milestone 1:
+
+- A TypeScript API scaffold under `apps/api`.
+- `POST /v1/captures` accepts a public URL or text containing a URL, preserves the source link, and creates a queued processing job.
+- `GET /v1/captures` and `GET /v1/captures/:id` provide user-scoped library reads.
+- `POST /v1/captures/:id/retry` requeues a capture without doing heavy work in the request path.
+- A local JSON repository keeps the storage boundary replaceable for Firestore.
+- Firebase project `saved-video-intelligence` is created and bound in `.firebaserc`; Google/email-password Authentication is enabled, and Firestore is live in `us-east1` with owner-scoped rules/indexes.
+- Shared contracts in `packages/shared-types` and a typed client in `packages/api-client`.
+- A GitHub repository discovery stage that extracts explicit links, performs bounded contextual searches when enabled, and persists ranked candidates with provenance.
+- A metadata provider interface in `packages/ingestion` and a queue-aware worker in `workers/metadata-worker`.
+- A local metadata worker runner that advances only the initial stage and never fabricates a completed knowledge item.
+- An Expo Router app in `apps/mobile` that runs on iOS and web through React Native Web.
+- The shared Inbox displays capture failures and uses the typed client to requeue them.
+- The shared client includes a capture detail route with processing history and source provenance.
+- A documented native Swift Share Extension boundary under `apps/mobile/ios`.
+- Tests cover API capture behavior, client transport/error handling, worker transitions, and per-user isolation.
+- The Node 24/npm 11 install is aligned with Expo SDK 57; the 20-test suite and TypeScript build pass, and Expo web has been smoke-tested on port 8081.
+
+The API has an authenticated-session transport boundary and a deployed Firestore adapter, but the mobile sign-in/session UI, generated Xcode target, media/transcription/summary/classification workers, recipes, MCP server, and end-to-end production credentials are intentionally not implemented yet.
+
 ### Milestone 1 — Capture
 
-- iOS app target
-- Share Extension
-- Capture endpoint
-- Persistent schema
-- Job records
-- Basic library view
+Complete: capture endpoint, persistent local/Firestore boundaries, job records, basic Expo iOS/web library view, source provenance, retry flow, and the documented Share Extension boundary.
+
+Remaining: mobile sign-in/session UI, generated Xcode target and entitlements, production API deployment, and an end-to-end phone share-sheet test.
 
 ### Milestone 2 — Extraction
 
@@ -431,4 +460,3 @@ The implementation is complete only when:
 - Users can export and delete their data.
 
 Do not build the 3D galaxy knowledge graph in the first version. Establish reliable capture, extraction, search, provenance, MCP access, and skill review first.
-

@@ -1,0 +1,9 @@
+{
+  "name": "@svi/worker-runtime",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": "./dist/src/server.js"
+  }
+}

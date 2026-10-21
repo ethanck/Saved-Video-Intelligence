@@ -1,0 +1,51 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function owns(data) {
+      return signedIn()
+        && data.userId is string
+        && data.userId.size() > 0
+        && data.userId.size() <= 128
+        && data.userId == request.auth.uid;
+    }
+
+    function queryWithinLimit() {
+      return request.query.limit != null && request.query.limit <= 100;
+    }
+
+    // The API and workers use Firebase Admin credentials for writes. The client
+    // reads through the authenticated API and cannot forge workflow state,
+    // provenance, or derived fields directly in Firestore.
+    match /captures/{captureId} {
+      allow get: if owns(resource.data);
+      allow list: if owns(resource.data) && queryWithinLimit();
+      allow create, update, delete: if false;
+    }
+
+    // Processing jobs are backend-owned and append/update only through workers.
+    match /jobs/{jobId} {
+      allow get: if owns(resource.data);
+      allow list: if owns(resource.data) && queryWithinLimit();
+      allow create, update, delete: if false;
+    }
+
+    match /transcripts/{captureId} {
+      allow get: if owns(resource.data);
+      allow list: if false;
+      allow create, update, delete: if false;
+    }
+
+    // Repository suggestions are backend-derived. Clients may read their own
+    // discovery record, but cannot fabricate or alter search results.
+    match /githubRepositoryDiscoveries/{captureId} {
+      allow get: if owns(resource.data);
+      allow list: if false;
+      allow create, update, delete: if false;
+    }
+  }
+}
