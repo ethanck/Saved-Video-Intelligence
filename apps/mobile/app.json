@@ -9,6 +9,7 @@
     "plugins": ["expo-router"],
     "ios": {
       "bundleIdentifier": "com.savedvideointelligence.app",
+      "googleServicesFile": "./ios/GoogleService-Info.plist",
       "supportsTablet": false
     },
     "web": {

@@ -28,7 +28,8 @@ This file is the quick orientation map for agents working on Saved Video Intelli
 | `apps/mobile/src/LibraryScreen.tsx` | Universal React Native/React Native Web capture and Inbox screen. |
 | `apps/mobile/src/CaptureDetailScreen.tsx` | Universal capture detail, processing history, source provenance, and retry screen. |
 | `apps/mobile/src/api.ts` | Shared mobile/web API client factory and Firebase-session handoff boundary. |
-| `apps/mobile/src/config.ts` | Public API URL and development user configuration. |
+| `apps/mobile/src/auth.tsx` | Persisted Firebase Auth session, email/password UI, remote-auth gate, and local development gate. |
+| `apps/mobile/src/config.ts` | Public API URL, Firebase client configuration, and development-mode detection. |
 | `apps/mobile/src/libraryActions.ts` | Testable source-save action used by the universal Library screen. |
 | `apps/mobile/app/_layout.tsx` | Expo Router root layout. |
 | `apps/mobile/app/index.tsx` | Expo Router entry route that renders the universal library screen. |

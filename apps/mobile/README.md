@@ -28,6 +28,8 @@ The current screens implement the capture/Inbox loop, capture detail history, re
 
 Copy the root `.env.example` values into an ignored `apps/mobile/.env` file and add the Firebase client configuration from the Firebase console. Set `EXPO_PUBLIC_API_URL` to the deployed API URL for a production test. The app supports email/password sign-in and account creation; the API verifies the resulting Firebase ID token. Do not add service-account JSON, GitHub tokens, speech credentials, or other provider secrets to this app or its environment.
 
+The local iOS Firebase app configuration is fetched as `ios/GoogleService-Info.plist` and referenced by `app.json`; it is ignored by Git. The React Native client is ready for Expo iOS prebuild, but the native Xcode project and Share Extension target still need to be created and linked before an iOS archive can be built.
+
 The API and metadata worker are separate processes during local development. Start both before testing capture processing:
 
 ```sh

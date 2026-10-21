@@ -8,5 +8,6 @@ data/
 .expo/
 ios/Pods/
 ios/build/
+apps/mobile/ios/GoogleService-Info.plist
 *.xcuserstate
 .DS_Store
